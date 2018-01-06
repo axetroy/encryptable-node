@@ -1,0 +1,63 @@
+#!/usr/bin/env node
+const fs = require("fs-extra");
+const crypto = require("crypto");
+const path = require("path");
+const program = require("caporal");
+const pkg = require("../package");
+
+/**
+ * encode dir
+ * @param src
+ * @param dist
+ * @param secret
+ */
+function encodeDir(src, dist, secret) {
+  fs.readdir(src).then(function(files) {
+    while (files.length) {
+      const fileName = files.shift();
+      const srcFilePath = path.join(src, fileName);
+      const distFilePath = path.join(dist, fileName);
+
+      fs.stat(srcFilePath).then(function(stat) {
+        if (stat.isDirectory()) {
+          const _src = path.dirname(src);
+          const _dist = path.dirname(dist);
+          return encodeDir(_src, _dist, secret);
+        } else if (stat.isFile()) {
+          fs.ensureFile(distFilePath).then(() => {
+            const read = fs.createReadStream(srcFilePath);
+            const write = fs.createWriteStream(distFilePath);
+
+            if (path.extname(srcFilePath) !== ".js") {
+              read.pipe(write);
+            } else {
+              const encode = crypto.createCipher("aes-256-ecb", secret);
+              encode.setAutoPadding(true);
+              encode.setEncoding("base64");
+              read.pipe(encode).pipe(write);
+            }
+          });
+        }
+      });
+    }
+  });
+}
+
+program.version(pkg.version).description(pkg.description);
+
+program
+  .command("encode")
+  .argument("<src>", "The source dir", program.STRING)
+  .argument("<dist>", "The dist dir", program.STRING)
+  .argument("<secret>", "The secret to encrypt", program.STRING)
+  .action(function(args) {
+    const cwd = process.cwd();
+    const src = path.isAbsolute(args.src) ? args.src : path.join(cwd, args.src);
+    const dist = path.isAbsolute(args.dist)
+      ? args.dist
+      : path.join(cwd, args.dist);
+    encodeDir(src, dist, args.secret);
+    console.log(args);
+  });
+
+program.parse(process.argv);
