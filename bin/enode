@@ -20,9 +20,7 @@ function encodeDir(src, dist, secret) {
 
       fs.stat(srcFilePath).then(function(stat) {
         if (stat.isDirectory()) {
-          const _src = path.dirname(src);
-          const _dist = path.dirname(dist);
-          return encodeDir(_src, _dist, secret);
+          return encodeDir(srcFilePath, distFilePath, secret);
         } else if (stat.isFile()) {
           fs.ensureFile(distFilePath).then(() => {
             const read = fs.createReadStream(srcFilePath);

@@ -1,1 +1,5 @@
-u6lPa2wlPb1wiRhNgJADlQ==
+const r = require('../../index');
+
+r.secret = 'hello';
+
+r('./dist/app');
