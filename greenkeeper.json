@@ -1,0 +1,10 @@
+{
+  "groups": {
+    "default": {
+      "packages": [
+        "example/hello-world/package.json",
+        "package.json"
+      ]
+    }
+  }
+}
